@@ -172,6 +172,11 @@ defmodule Raven do
   end
 
   @spec transform([String.t], %Event{}) :: %Event{}
+  def transform(["{" <> frame|t], state) do
+    transform_erlang_line(["{" <> frame|t], state)
+  end
+
+  @spec transform([String.t], %Event{}) :: %Event{}
   def transform([_|t], state) do
     transform(t, state)
   end
@@ -222,6 +227,16 @@ defmodule Raven do
     }])
 
     transform(t, state)
+  end
+
+  def transform_erlang_line(frames, state) do
+    Map.put(state, :culprit, frames |> Enum.join)
+
+    state = put_in(state.stacktrace.frames, state.stacktrace.frames ++ [%{
+      function: frames |> Enum.join
+    }])
+
+    transform([], state)
   end
 
   @spec unix_timestamp :: Number.t
